@@ -1,12 +1,9 @@
 (ns async-life.core
-  (:use [domina :only [by-id set-text!]])
   (:require [cljs.core.async :as async
-             :refer [<! >! >!! chan put! timeout alts!]]
-            )
+             :refer [<! >! chan timeout alts!]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (def line-colour "#cdcdcd")
-(def padding 0)
 (def alive "#666")
 (def dead "#eee")
 (def width (atom nil))
@@ -19,17 +16,17 @@
   (set! (.-fillStyle context) colour)
   (set! (.-strokeStyle context) line-colour)
   (.fillRect context
-             (+ (* x cell-size) padding)
-             (+ (* y cell-size) padding)
+             (* x cell-size)
+             (* y cell-size)
              cell-size
              cell-size)
   (.strokeRect context
-               (+ (* x cell-size) padding)
-               (+ (* y cell-size) padding)
+               (* x cell-size)
+               (* y cell-size)
                cell-size
                cell-size))
 
-(defn drawer []
+(def draw
   (let [c (chan 1000)]
     (go (loop []
           (let [[x y colour] (<! c)]
@@ -37,13 +34,6 @@
             (fill_sq x y colour)
             (recur))))
     c))
-
-(def draw (drawer))
-
-
-
-(defn log [msg]
-  (.log js/console msg))
 
 (defn cell [[x y]]
   (let [new-neighbor (chan)
