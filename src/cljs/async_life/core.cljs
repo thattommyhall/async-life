@@ -6,40 +6,48 @@
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (def line-colour "#cdcdcd")
-
 (def padding 0)
-
 (def alive "#666")
 (def dead "#eee")
-
-(def context (atom nil))
 (def width (atom nil))
 (def height (atom nil))
-(def cell-size (atom 30))
-(def canvas (atom nil))
+(def cell-size 30)
+(def canvas (.getElementById js/document "world"))
+(def context (.getContext canvas "2d"))
 
 (defn fill_sq [x y colour]
-  (let [c @context
-        s @cell-size]
-    (set! (.-fillStyle c) colour)
-    (set! (.-strokeStyle c) line-colour)
-    (.fillRect c
-               (+ (* x s) padding)
-               (+ (* y s) padding)
-               s
-               s)
-    (.strokeRect c
-                 (+ (* x s) padding)
-                 (+ (* y s) padding)
-                 s
-                 s)))
+  (set! (.-fillStyle context) colour)
+  (set! (.-strokeStyle context) line-colour)
+  (.fillRect context
+             (+ (* x cell-size) padding)
+             (+ (* y cell-size) padding)
+             cell-size
+             cell-size)
+  (.strokeRect context
+               (+ (* x cell-size) padding)
+               (+ (* y cell-size) padding)
+               cell-size
+               cell-size))
+
+(defn drawer []
+  (let [c (chan 1000)]
+    (go (loop []
+          (let [[x y colour] (<! c)]
+            (fill_sq x y colour)
+            (recur))))
+    c))
+
+(def draw (drawer))
 
 (defn resized []
-  (set! (.-width @canvas) (.-innerWidth js/window))
-  (set! (.-height @canvas) (.-innerHeight js/window))
-  (reset! width (/ (.-width @canvas) @cell-size))
-  (reset! height (/ (.-height @canvas) @cell-size))
-  )
+  (set! (.-width canvas) (.-innerWidth js/window))
+  (set! (.-height canvas) (.-innerHeight js/window))
+  (reset! width (/ (.-width canvas) cell-size))
+  (reset! height (/ (.-height canvas) cell-size))
+  (doseq [y (range @height)
+          x (range @width)]
+    (fill_sq x y dead))
+  (draw-loop))
 
 (set! (.-onresize js/window) resized)
 
@@ -53,14 +61,15 @@
         initial-state (rand-nth [:dead :alive])
         ]
     (if (= initial-state :alive)
-      (fill_sq x y alive))
+      (go (>! draw [x y alive]))
+      )
     (go (loop [neighbor-count 0
                state initial-state
                neighbors neighbors]
           (let [[val chan] (alts! [new-neighbor input])]
             (cond (= chan new-neighbor)
                   (do (if (= state :alive)
-                        (<! (timeout 1000))
+                        (<! (timeout 300))
                         (>! val 1))
                       (recur neighbor-count state (conj neighbors val)))
 
@@ -74,12 +83,12 @@
                         delta (if (= new-state :alive) 1 (- 1))
                         colour (if (= new-state :alive) alive dead)
                         ]
-                    ;; (log (str x " " y " " neighbor-count))
                     (if draw?
                       (do (doseq [n neighbors]
                             (<! (timeout 1))
                             (>! n delta))
-                          (fill_sq x y colour)))
+                          (>! draw [x y colour])
+                          ))
                     (recur neighbor-count new-state neighbors))))))
     [input new-neighbor]))
 
@@ -106,17 +115,7 @@
     (doseq [[xy [input _]] cells]
       (go (doseq [[_ nn] (neighbors xy cells)]
             (<! (timeout 1))
-            (>! nn input))))
-
-  ))
+            (>! nn input))))))
 
 (defn ^:export init []
-  (reset! canvas (by-id "world"))
-  (reset! context (.getContext @canvas  "2d"))
-  (resized)
-  (doseq [y (range @height)
-          x (range @width)]
-    (fill_sq x y dead)
-    )
-  (draw-loop)
-  )
+  (resized))

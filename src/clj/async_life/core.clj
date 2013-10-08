@@ -11,10 +11,12 @@
   (GET "/" []
        (html [:head {:title "Async Life"}
               [:link {:rel "stylesheet" :href "css/style.css"}]
-              [:script {:src "js/dev.js"}]]
+              ]
+
              [:body {:onload "async_life.core.init();"}
               [:div
-               [:canvas#world {:width 400 :height 400} ]]]))
+               [:canvas#world {:width 400 :height 400} ]
+               [:script {:src "js/dev.js"}]]]))
   (route/resources "/")
   (route/not-found "Page not found"))
 
