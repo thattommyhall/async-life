@@ -33,6 +33,7 @@
   (let [c (chan 1000)]
     (go (loop []
           (let [[x y colour] (<! c)]
+            (<! (timeout 1))
             (fill_sq x y colour)
             (recur))))
     c))
@@ -121,5 +122,5 @@
 
 (defn ^:export init []
   (resized)
-  (go (<! (timeout 5000))
+  (go (<! (timeout 90000))
       (.reload js/location)))
