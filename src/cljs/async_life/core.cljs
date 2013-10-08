@@ -120,4 +120,6 @@
 (set! (.-onresize js/window) resized)
 
 (defn ^:export init []
-  (resized))
+  (resized)
+  (go (<! (timeout 5000))
+      (.reload js/location)))
