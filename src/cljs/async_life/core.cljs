@@ -1,7 +1,7 @@
 (ns async-life.core
   (:use [domina :only [by-id set-text!]])
   (:require [cljs.core.async :as async
-             :refer [<! >! >!! chan put! timeout]]
+             :refer [<! >! >!! chan put! timeout alts!]]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
