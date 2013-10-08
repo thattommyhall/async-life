@@ -26,7 +26,6 @@
 (defn page-for [env]
   (html [:head {:title "Async Life"}
          [:link {:rel "stylesheet" :href "css/style.css"}]
-         ga
          ]
 
         [:body {:onload "async_life.core.init();"}
