@@ -39,17 +39,7 @@
 
 (def draw (drawer))
 
-(defn resized []
-  (set! (.-width canvas) (.-innerWidth js/window))
-  (set! (.-height canvas) (.-innerHeight js/window))
-  (reset! width (/ (.-width canvas) cell-size))
-  (reset! height (/ (.-height canvas) cell-size))
-  (doseq [y (range @height)
-          x (range @width)]
-    (fill_sq x y dead))
-  (draw-loop))
 
-(set! (.-onresize js/window) resized)
 
 (defn log [msg]
   (.log js/console msg))
@@ -116,6 +106,18 @@
       (go (doseq [[_ nn] (neighbors xy cells)]
             (<! (timeout 1))
             (>! nn input))))))
+
+(defn resized []
+  (set! (.-width canvas) (.-innerWidth js/window))
+  (set! (.-height canvas) (.-innerHeight js/window))
+  (reset! width (/ (.-width canvas) cell-size))
+  (reset! height (/ (.-height canvas) cell-size))
+  (doseq [y (range @height)
+          x (range @width)]
+    (fill_sq x y dead))
+  (draw-loop))
+
+(set! (.-onresize js/window) resized)
 
 (defn ^:export init []
   (resized))
