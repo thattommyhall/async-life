@@ -35,7 +35,7 @@
 
           [:canvas#world {:width 400 :height 400} ]
           [:script {:src (str "js/" env ".js")}]]
-         ga]))
+         ]))
 
 
 (defroutes site-routes
