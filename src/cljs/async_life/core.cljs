@@ -11,7 +11,7 @@
 (def cell-size (atom nil))
 (def canvas (.getElementById js/document "world"))
 (def context (.getContext canvas "2d"))
-
+(def prob 0.5)
 
 (defn fill_sq [x y colour]
   (let [cell-size @cell-size]
@@ -29,10 +29,10 @@
                  cell-size)))
 
 (def draw
-  (let [c (chan 200)]
+  (let [c (chan)]
     (go (loop []
           (let [[x y colour] (<! c)]
-            (<! (timeout 0.1))
+            (<! (timeout 10))
             (fill_sq x y colour)
             (recur))))
     c))
@@ -41,17 +41,15 @@
   (let [new-neighbor (chan)
         input (chan)
         neighbors #{}
-        initial-state (rand-nth [:dead :alive])
-        ]
+        initial-state (if (< (rand) prob) :alive :dead)]
     (if (= initial-state :alive)
-      (go (>! draw [x y alive])))
+      (fill_sq x y alive))
     (go (loop [neighbor-count 0
                state initial-state
                neighbors neighbors]
           (let [[val chan] (alts! [new-neighbor input])]
             (cond (= chan new-neighbor)
                   (do (if (= state :alive)
-                        (<! (timeout 100))
                         (>! val 1))
                       (recur neighbor-count state (conj neighbors val)))
                   :else
@@ -65,10 +63,8 @@
                         colour (if (= new-state :alive) alive dead)]
                     (if draw?
                       (do (doseq [n neighbors]
-                            (<! (timeout 10))
                             (>! n delta))
-                          (>! draw [x y colour])
-                          ))
+                          (>! draw [x y colour])))
                     (recur neighbor-count new-state neighbors))))))
     [input new-neighbor]))
 
@@ -88,14 +84,14 @@
               [x y])
         cells (zipmap xys (map cell xys))]
     (doseq [[xy [input _]] cells]
-      (go (doseq [[_ nn] (neighbors xy cells)]
-            (<! (timeout 10))
-            (>! nn input))))))
+      (go
+       (doseq [[_ nn] (neighbors xy cells)]
+         (>! nn input))))))
 
 (defn ^:export init []
   (set! (.-width canvas) (.-clientWidth canvas))
   (set! (.-height canvas) (.-clientHeight canvas))
-  (reset! width 40)
+  (reset! width 75)
   (reset! cell-size (/ (.-clientWidth canvas) @width))
   (reset! height (/ (.-clientHeight canvas) @cell-size))
   (doseq [y (range @height)
