@@ -23,11 +23,17 @@ end
 
 task :update_upstart do
   put File.read(File.join(File.dirname(__FILE__), 'upstart')), '/tmp/upstart', :mode => '644'
-  sudo "mv -f /tmp/upstart /etc/init/ca.conf"
+  sudo "mv -f /tmp/upstart /etc/init/life.conf"
+end
+
+namespace :nginx do
+  task :reload do
+    sudo "service nginx reload"
+  end
 end
 
 before "deploy:restart", :update_upstart, "deploy:compile_js"
-after "deploy:restart", "deploy:cleanup"
+after "deploy:restart", "deploy:cleanup", "nginx:reload"
 
 namespace :deploy do
   task :compile_js do
