@@ -40,7 +40,7 @@ namespace :deploy do
     run "cd #{release_path} && lein cljsbuild once"
   end
   task :restart do
-    sudo "stop ca;true"
-    sudo "start ca"
+    sudo "stop life;true"
+    sudo "start life"
   end
 end
